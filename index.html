@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8"> 
+  <link rel="image_src" href="logo.jpg">
+  <title>Patterns</title>
+</head>
+<body>
+<style>
+@import url(http://fonts.googleapis.com/css?family=Cinzel+Decorative);
+body {
+  text-align: center;
+  color: lightgray;
+  background: #1a1a1a;
+  margin-top: 7%;
+  font-size: 266%;
+}
+
+.htmlsucks {
+  position: fixed;
+  top:0;
+  bottom:0;
+  left:0;
+  right:0;
+}
+
+.noise {
+  width: 100%;
+  height: 100%;
+}
+
+.render {
+  display: none;
+}
+
+.header {
+	font-family: 'Cinzel Decorative', cursive;
+	position: fixed;
+	top: 0.33em;
+	left: 0;
+	right: 0;
+	text-align: center;
+	color: lightgrey;
+	background: rgba(0,0,0,0.5);
+	padding: 0.2em 0 0.25em 0;
+	font-size: 1.3em;
+}
+
+.download {
+  font-size: 0.28em;
+  margin-top: -0.3em;
+}
+
+a {
+  color: wheat;
+  font-family: 'Courier';
+}
+
+.footer {
+	font-family: 'Courier';
+	font-size: 0.3em;
+	position: fixed;
+	bottom: 0.6em;
+	left: 0;
+	right: 0;
+	text-align: center;
+	color: lightgrey;
+	background: rgba(0,0,0,0.5);
+	padding: 0.6em 0 0.5em 0;
+}
+
+
+.sidebar {
+	font-size: 0.3em;
+	position: fixed;
+	top: 12.5em;
+	
+	right: -0.3em;
+	width: 3.3em;
+	text-align: center;
+	color: lightgrey;
+	background: rgba(0,0,0,0.5);
+	border-radius: 0.4em;
+	line-height: 1.3em;
+	
+	padding: 0.8em 0 0.6em 0;
+}
+</style>
+
+<div class="htmlsucks">
+    <canvas class="noise"></canvas>
+</div>
+
+<div class="sidebar">
+
+  <a id="hq" href="#">HQ</a> <br />
+  <a id="lq" href="#">PX</a> <br />
+  <a id="sv" href="#" download="moire.png">SAVE</a> <br />
+  
+</div>
+
+<div class="header">
+  PATTERNS
+  <div class="download"><a href="">Moiré</a></div>
+</div>
+
+<div class="footer">
+  developed by <a class="skmp" href="http://github.com/skmp">skmp</a> | using Canvas and <a href="http://en.wikipedia.org/wiki/Moir%C3%A9_pattern">Moiré Patterns</a> <br />
+  <a href="https://github.com/skmp/patterns">fork me on github</a>
+</div>
+
+<script>
+var render = document.querySelector('.noise');
+var div = document.querySelector('.htmlsucks');
+pX = 0;
+pY = 0;
+sXY = 0.012345679012345678;
+supersample = 0.5;
+
+function fill_canvas() {
+
+  var canvasWidth  = div.offsetWidth * supersample;
+  var canvasHeight = div.offsetHeight * supersample;
+  
+  render.width = canvasWidth;
+  render.height = canvasHeight;
+  
+  var ctx = render.getContext('2d');
+  console.log("filling at ",pX,pY, " -- ", canvasWidth, canvasHeight);
+  var imageData = ctx.getImageData(0, 0, canvasWidth, canvasHeight);
+
+  var buf = new ArrayBuffer(canvasHeight*canvasWidth*4);
+  var buf8 = new Uint8ClampedArray(buf);
+  var data = new Uint32Array(buf);
+  
+  var sD = sXY / supersample;
+  
+  var rX = pX - canvasWidth/2*sD;
+  var rY = pY - canvasHeight/2*sD;
+  
+  for (var iy = 0; iy < canvasHeight; ++iy) {
+      for (var ix = 0; ix < canvasWidth; ++ix) {
+	  
+	  var ax = ix*sD + rX*11;
+	  var ay = iy*sD + rY*11;
+	  var rx = ix*sD + rX+3;
+	  var ry = iy*sD + rY-3;
+	  var gx = ix*sD + rX+5;
+	  var gy = iy*sD + rY-9;
+	  var bx = ix*sD + rX+2;
+	  var by = iy*sD + rY-1;
+	  
+	  var a = 255 & (128 + ( 3*ax * 7*ay % canvasHeight) ^ ( 1*ax * 5*ay % canvasWidth));
+	  var r = 255 & (( 3*rx * 7*ry % canvasHeight) ^ ( 1*rx * 5*ry % canvasWidth));
+	  var g = 255 & (( 3*gx * 7*gy % canvasHeight) ^ ( 1*gx * 5*gy % canvasWidth));
+	  var b = 255 & (( 3*bx * 7*by % canvasHeight) ^ ( 1*bx * 5*by % canvasWidth));
+
+	  data[iy * canvasWidth + ix] =
+	      (a   << 24) |    // alpha
+	      (b << 16) |    // blue
+	      (g <<  8) |    // green
+	      r;            // red
+      }
+  }
+  imageData.data.set(buf8);
+
+  ctx.putImageData(imageData, 0, 0);
+  
+  //draw.getContext('2d').drawImage(render,0,0,draw.width,draw.height);
+}
+
+function dataURItoBlob(dataURI) {
+  // convert base64 to raw binary data held in a string
+  // doesn't handle URLEncoded DataURIs - see SO answer #6850276 for code that does this
+  var byteString = atob(dataURI.split(',')[1]);
+
+  // separate out the mime component
+  var mimeString = dataURI.split(',')[0].split(':')[1].split(';')[0]
+
+  // write the bytes of the string to an ArrayBuffer
+  var ab = new ArrayBuffer(byteString.length);
+  var ia = new Uint8Array(ab);
+  for (var i = 0; i < byteString.length; i++) {
+      ia[i] = byteString.charCodeAt(i);
+  }
+
+  // write the ArrayBuffer to a blob, and you're done
+  var bb = new Blob([ia],{type:mimeString});
+  return bb;//.getBlob(mimeString);
+}
+
+state = { active: false, lastX: 0, lastY: 0 }
+
+function scroll(t, e) {
+    e.preventDefault();
+    e.stopPropagation();
+
+    var sx = e.screenX;
+    var sy = e.screenY;
+
+    if (e.touches && e.touches.length)  sx = e.touches.item(0).screenX;
+    if (e.touches && e.touches.length)  sy = e.touches.item(0).screenY;
+
+    if (sx !== undefined && sy !== undefined) {
+      var xd = (sx - state.lastX);
+      var yd = (sy - state.lastY);
+
+      state.lastX = sx;
+      state.lastY = sy;
+
+      if ( state.active ) {
+        pX -= xd*sXY;
+        pY -= yd*sXY;
+        fill_canvas();
+      }
+    }
+
+    state.active |= e.type == "mousedown";
+    state.active |= e.type == "touchstart";
+
+    state.active &= e.type != "mouseup";
+    state.active &= e.type != "touchend";
+  }
+
+  
+document.querySelector('#hq').onclick = function(e) { supersample += 0.125; fill_canvas(); }
+document.querySelector('#lq').onclick = function(e) { supersample -= 0.125; fill_canvas(); }
+document.querySelector('#sv').onclick = function(e) { URL.revokeObjectURL(e.target.href), e.target.href = URL.createObjectURL(dataURItoBlob(render.toDataURL())); }
+
+window.onresize = fill_canvas;
+
+    div.onmousewheel=(function(e){
+      var step = 1 + Math.abs(e.wheelDelta)/360;
+      
+      if (e.wheelDelta > 0)
+	sXY *= step;
+      else
+	sXY /= step;
+	
+      fill_canvas();
+
+    });
+    
+  fill_canvas();
+  
+  div.addEventListener('mousedown',   function mouse_down(e) { e.preventDefault(); scroll(div, e); } );
+  div.addEventListener('mouseup',     function mouse_up(e)   { e.preventDefault(); scroll(div, e); } );
+  div.addEventListener('mousemove',   function mouse_move(e) { e.preventDefault(); scroll(div, e); } );
+
+  div.addEventListener('touchstart',  function touch_down(e) { e.preventDefault(); scroll(div, e); } );
+  div.addEventListener('touchend',    function touch_up(e)   { e.preventDefault(); scroll(div, e); } );
+  div.addEventListener('touchmove',   function touch_move(e) { e.preventDefault(); scroll(div, e); } );
+
+</script>
+
+<!-- I Really love people that inspect pages <3 -->
+</body></html>
