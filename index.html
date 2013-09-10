@@ -125,6 +125,9 @@ function fill_canvas() {
   render.width = canvasWidth;
   render.height = canvasHeight;
   
+  canvasWidth = render.width;
+  canvasHeight = render.height;
+  
   var ctx = render.getContext('2d');
   console.log("filling at ",pX,pY, " -- ", canvasWidth, canvasHeight);
   var imageData = ctx.getImageData(0, 0, canvasWidth, canvasHeight);
